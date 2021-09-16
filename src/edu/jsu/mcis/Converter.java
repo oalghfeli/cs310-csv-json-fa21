@@ -7,7 +7,7 @@ import org.json.simple.*;
 import org.json.simple.parser.*;
 
 public class Converter {
-    
+
     /*
     
         Consider the following CSV data:
@@ -54,45 +54,112 @@ public class Converter {
         libraries we have discussed, OpenCSV and json-simple.  See the "Data
         Exchange" lecture notes for more details, including example code.
     
-    */
-    
+     */
     @SuppressWarnings("unchecked")
     public static String csvToJson(String csvString) {
-        
+
         String results = "";
-        
+
         try {
-            
+
             CSVReader reader = new CSVReader(new StringReader(csvString));
             List<String[]> full = reader.readAll();
             Iterator<String[]> iterator = full.iterator();
-            
+
             // INSERT YOUR CODE HERE
-            
-        }        
-        catch(Exception e) { e.printStackTrace(); }
-        
+            CSVParser parser = new CSVParser();
+            BufferedReader buffReader = new BufferedReader(new StringReader(csvString));
+            JSONObject jsonObj = new JSONObject();
+
+            JSONArray colHead = new JSONArray();
+            JSONArray rowHead = new JSONArray();
+            JSONArray dataArr = new JSONArray();
+
+            colHead.add("ID");
+            colHead.add("Total");
+            colHead.add("Assignment 1");
+            colHead.add("Assignment 2");
+            colHead.add("Exam 1");
+            jsonObj.put("colHeaders", colHead);
+            jsonObj.put("rowHeaders", rowHead);
+            jsonObj.put("data", dataArr);
+
+            String line = buffReader.readLine();
+            while ((line = buffReader.readLine()) != null) {
+                String[] parsedData = parser.parseLine(line);
+                rowHead.add(parsedData[0]);
+                JSONArray rows = new JSONArray();
+                rows.add(new Long(parsedData[1]));
+                rows.add(new Long(parsedData[2]));
+                rows.add(new Long(parsedData[3]));
+                rows.add(new Long(parsedData[4]));
+                dataArr.add(rows);
+            }
+
+            results = jsonObj.toString();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return results.trim();
-        
+
     }
-    
+
     public static String jsonToCsv(String jsonString) {
-        
+
         String results = "";
-        
+
         try {
 
             StringWriter writer = new StringWriter();
             CSVWriter csvWriter = new CSVWriter(writer, ',', '"', '\\', "\n");
-            
+
             // INSERT YOUR CODE HERE
+            JSONParser parser = new JSONParser();
+            JSONObject jsonObj = (JSONObject) parser.parse(jsonString);
+
+            JSONArray cols = (JSONArray) jsonObj.get("colHeaders");
+            JSONArray rows = (JSONArray) jsonObj.get("rowHeaders");
+            JSONArray dataArr = (JSONArray) jsonObj.get("data");
+
+            int j = 0;
+            int counter = 1;
+
+            for (int i = 0; i < cols.size(); i++) {
+                if (i != cols.size() - 1) {
+                    writer.append("\"" + cols.get(i) + "\",");
+                } else {
+                    writer.append("\"" + cols.get(i) + "\"");
+                }
+            }
+            writer.append("\n");
+
+            for (int i = 0; i < rows.size(); i++) {
+                writer.append("\"" + rows.get(i) + "\",");
+                while (j < counter) {
+                    JSONArray part = (JSONArray) dataArr.get(j);
+                    for (int k = 0; k < part.size(); k++) {
+                        if (k != part.size() - 1) {
+                            writer.append("\"" + part.get(k) + "\",");
+                        } else {
+                            writer.append("\"" + part.get(k) + "\"");
+                        }
+                    }
+                    j++;
+                }
+                counter++;
+                writer.append("\n");
+            }
+
+            results += writer.toString();
             
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        
-        catch(Exception e) { e.printStackTrace(); }
-        
+
         return results.trim();
-        
+
     }
 
 }
